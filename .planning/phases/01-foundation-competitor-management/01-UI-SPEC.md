@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: foundation-competitor-management
-status: draft
+status: approved
+reviewed_at: 2026-07-03
 shadcn_initialized: false
 preset: "default (init during scaffold: base color zinc, CSS variables, dark default)"
 created: 2026-07-03
