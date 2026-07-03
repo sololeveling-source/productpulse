@@ -528,17 +528,17 @@ git remote add origin <repo-url> && git push -u origin main
 | A4 | Neon cold-start latency after autosuspend is ~0.5–2s | Pitfall 7 | Low — magnitude only; autosuspend-at-5-min itself is verified from pricing page |
 | A5 | Vercel Hobby remains sufficient (no new limits since project research 2026-07-02) | Deployment | Low — deploy-day-one strategy exists precisely to surface this immediately |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Edit UX: inline dialogs vs dedicated edit page?**
+   - RESOLVED: dialog-on-list-page — locked in 01-UI-SPEC.md and implemented in Plans 03 (create dialog) and 04 (edit mode of the same `CompetitorDialog`)
    - What we know: both are trivial with shadcn (Dialog vs `[id]/page.tsx`); COMP-02 only requires that edit/remove work
-   - Recommendation: planner's/executor's discretion; dialog-on-list-page is less routing surface for a walking skeleton
 2. **Should `sources.url` be unique per competitor?**
+   - RESOLVED: yes — composite unique index `(competitor_id, url)` added in Plan 02 (locked discretionary decision)
    - What we know: duplicate URLs would create duplicate monitoring work in Phase 2
-   - Recommendation: add a composite unique index `(competitor_id, url)` — cheap now, prevents a Phase 2 bug class
 3. **Single `.env` vs `.env.local` split locally**
-   - What we know: Next.js loads `.env.local`; drizzle.config.ts uses `dotenv` which loads `.env`
-   - Recommendation: single `.env` (gitignored) + `dotenv` in drizzle.config.ts; Next also reads `.env`
+   - RESOLVED: single `.env` (gitignored) + `dotenv` in drizzle.config.ts — locked decision in Plans 02/03
+   - What we know: Next.js loads `.env.local`; drizzle.config.ts uses `dotenv` which loads `.env`; Next also reads `.env`
 
 ## Environment Availability
 
