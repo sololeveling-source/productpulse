@@ -79,7 +79,7 @@ Dark-only theme. Values map onto shadcn zinc CSS variables; override in `globals
 Text: primary #FAFAFA (zinc-50), secondary/muted #A1A1AA (zinc-400). Text on accent-filled buttons: #083344 (near-black cyan-950) for contrast.
 
 Accent reserved for:
-1. Primary CTA button fill ("Add competitor" and dialog "Save" submit buttons)
+1. Primary CTA button fill — "Add competitor" page CTA, "Add competitor" add-dialog submit, and "Save changes" edit-dialog submit
 2. Active nav item left indicator bar + active nav label
 3. Focus rings (keyboard focus-visible)
 4. The `changelog`/`pricing` type badges use **muted neutral** styling (zinc-800 bg, zinc-400 text, 12px) — NOT accent. Accent never appears on badges, links, table rows, or icons.
@@ -90,18 +90,21 @@ Rationale: cyan is deliberately chosen because Phase 3/5 diff evidence will own 
 
 ## Copywriting Contract
 
-Voice: confident, concise, sentence case everywhere (buttons, headings, labels). No exclamation marks. No "please".
+Voice: confident, concise, sentence case everywhere (buttons, headings, labels). No exclamation marks. No "please". No generic button labels ("Save", "Cancel", "Submit", "OK") anywhere — every labeled CTA is a specific verb + noun.
 
 | Element | Copy |
 |---------|------|
 | Primary CTA | "Add competitor" |
+| Add-dialog submit | "Add competitor" (matches the page CTA) |
+| Edit-dialog submit | "Save changes" |
+| Dialog dismissal (add/edit) | No labeled cancel CTA — dismiss via the dialog's X close button and Esc (radix Dialog defaults). X button `aria-label="Close dialog"` |
 | Secondary CTA (in add/edit form) | "Add URL" (appends a URL row) |
 | Empty state heading | "No competitors yet" |
 | Empty state body | "Add a competitor and the changelog or pricing pages you want ProductPulse to watch." + "Add competitor" button |
 | Form validation errors (inline, 12px destructive text under field) | Name empty: "Enter a competitor name." / Bad URL: "Enter a full URL starting with http:// or https://." / Blocked host: "This URL points to a private or internal address and can't be monitored." / No URLs: "Add at least one URL to monitor." |
 | Save failure (server error) | "Couldn't save competitor. Check your connection and try again." (inline alert above form, not a blank state) |
-| Destructive confirmation | Delete competitor: dialog titled "Delete {name}?" body "This removes its monitored URLs and everything ProductPulse has captured for them. This can't be undone." Confirm button (destructive fill): "Delete competitor". Cancel: "Cancel". |
-| Remove URL (within edit form) | No dialog — inline row removal with icon button, reversible until "Save changes" is pressed |
+| Destructive confirmation | Delete competitor: dialog titled "Delete {name}?" body "This removes its monitored URLs and everything ProductPulse has captured for them. This can't be undone." Confirm button (destructive fill): "Delete competitor". Dismiss button (secondary/outline): "Keep competitor". |
+| Remove URL (within edit form) | No dialog — inline row removal with icon button (`aria-label="Remove URL"`), reversible until "Save changes" is pressed |
 | Success feedback | Toast (sonner): "Competitor added" / "Changes saved" / "Competitor deleted" — noun + past-tense verb, no fluff |
 
 ---
@@ -124,16 +127,17 @@ Desktop-first; minimum supported viewport 1024px. No mobile work this phase.
 
 **Competitor list contract:**
 - shadcn Table inside a bordered card. Columns: Competitor (name, 14px semibold), Monitored URLs (stacked rows: type badge + mono URL, one per line), Added (12px muted, relative date), Actions (right-aligned icon buttons: edit `pencil`, delete `trash-2`, ghost variant, destructive hover tint on delete).
-- Add and edit use a shadcn **Dialog** on the list page (per RESEARCH.md Open Question 1 recommendation: less routing surface). Dialog contains: name Input, dynamic URL rows (Select for kind: "Changelog"/"Pricing" + Input for URL + remove-row icon button), "Add URL" ghost button, footer with Cancel + accent "Save" submit.
-- Delete uses shadcn **AlertDialog** with the destructive copy above.
+- Icon-only action buttons carry aria-labels and shadcn Tooltips: edit → `aria-label="Edit {name}"` (tooltip "Edit"), delete → `aria-label="Delete {name}"` (tooltip "Delete"), remove-URL row button → `aria-label="Remove URL"` (tooltip "Remove URL").
+- Add and edit use a shadcn **Dialog** on the list page (per RESEARCH.md Open Question 1 recommendation: less routing surface). Dialog contains: name Input, dynamic URL rows (Select for kind: "Changelog"/"Pricing" + Input for URL + remove-row icon button), "Add URL" ghost button, footer with a single accent submit — "Add competitor" in add mode, "Save changes" in edit mode. Dismissal via the dialog's X close button and Esc; no labeled cancel CTA.
+- Delete uses shadcn **AlertDialog**: destructive "Delete competitor" confirm + secondary "Keep competitor" dismiss (copy above).
 
 ---
 
 ## Component Inventory (shadcn official)
 
-`button`, `input`, `label`, `card`, `table`, `dialog`, `alert-dialog`, `badge`, `select`, `sonner`
+`button`, `input`, `label`, `card`, `table`, `dialog`, `alert-dialog`, `badge`, `select`, `sonner`, `tooltip`
 
-(RESEARCH.md install list + `alert-dialog` for delete confirmation + `sonner` for success toasts.)
+(RESEARCH.md install list + `alert-dialog` for delete confirmation + `sonner` for success toasts + `tooltip` for icon-only action buttons.)
 
 ---
 
@@ -154,7 +158,7 @@ Desktop-first; minimum supported viewport 1024px. No mobile work this phase.
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| shadcn official | button, input, label, card, table, dialog, alert-dialog, badge, select, sonner | not required |
+| shadcn official | button, input, label, card, table, dialog, alert-dialog, badge, select, sonner, tooltip | not required |
 
 No third-party registries declared. Vetting gate: not applicable (verified 2026-07-03 — greenfield, no components.json, no third-party sources requested by any upstream artifact).
 
