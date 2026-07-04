@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-03-PLAN.md (Neon schema push + COMP-01 add/list vertical slice)
-last_updated: "2026-07-04T01:21:43.417Z"
+stopped_at: Completed 01-04-PLAN.md (edit reconcile-by-id + delete with confirmation)
+last_updated: "2026-07-04T01:36:00.576Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 1 of 6 (Foundation & Competitor Management)
-Plan: 3 of 5 executed (01-03 complete)
-Status: Executing — Plan 3 of 5 complete
+Plan: 4 of 5 executed (01-03 complete)
+Status: Ready to execute
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ### Phase 1 Plans (3/5 executed)
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 60%
 | Phase 01 P01 | 45min | 3 tasks | 34 files |
 | Phase 01 P02 | 20min | 2 tasks | 7 files |
 | Phase 01 P03 | 25min | 3 tasks | 8 files |
+| Phase 01 P04 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Key decisions affecting current work:
 - [Phase 01-03]: Duplicated (mirrored) validation.ts's internal-host denylist locally in actions.ts and competitor-dialog.tsx purely for exact-copy error-message classification, per the plan's locked interface (import createCompetitorSchema, never redefine it) — createCompetitorSchema.safeParse remains the sole security gate
 - [Phase 01-03]: CompetitorDialog takes a trigger:ReactNode prop so the same client Dialog mounts from both the page header CTA and the empty-state CTA without exposing button styling across the RSC/client boundary
 - [Phase 01-03]: Verified the add-competitor flow by invoking createCompetitor directly via tsx against live Neon (no browser automation tool available), plus next dev + curl across a dev-server restart, since the plan's human-check step assumes browser access this environment lacks
+- [Phase 01-04]: Reconcile-by-id edit strategy: never delete-and-reinsert child rows on update; every statement scoped by both child id and parent id to block cross-parent IDOR
+- [Phase 01-04]: CompetitorDialog stays a single component for add and edit (mode prop) rather than forking, running both useActionState hooks unconditionally and selecting by mode at render time
+- [Phase 01-04]: deleteCompetitor stayed a plain single-arg Server Action (no useActionState); success toast derived client-side via useFormStatus's pending-edge instead
 
 ### Pending Todos
 
@@ -86,8 +90,8 @@ Key decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-04T01:21:43.412Z
-Stopped at: Completed 01-03-PLAN.md (Neon schema push + COMP-01 add/list vertical slice)
+Last session: 2026-07-04T01:36:00.569Z
+Stopped at: Completed 01-04-PLAN.md (edit reconcile-by-id + delete with confirmation)
 Resume file: None
 
 ---

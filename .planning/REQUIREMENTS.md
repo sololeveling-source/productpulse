@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Competitor Management
 
 - [x] **COMP-01**: User can add a competitor with a name and one or more monitored URLs, each typed as changelog or pricing
-- [ ] **COMP-02**: User can edit and remove competitors and their monitored URLs
+- [x] **COMP-02**: User can edit and remove competitors and their monitored URLs
 
 ### Monitoring & Change Detection
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | COMP-01 | Phase 1 | Complete |
-| COMP-02 | Phase 1 | Pending |
+| COMP-02 | Phase 1 | Complete |
 | MON-02 | Phase 2 | Pending |
 | MON-05 | Phase 2 | Pending |
 | MON-06 | Phase 2 | Pending |
