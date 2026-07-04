@@ -16,7 +16,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **MON-01**: System automatically checks all monitored URLs on a daily schedule
 - [x] **MON-02**: System stores a snapshot of extracted, normalized page content per check
-- [ ] **MON-03**: System detects changes by diffing normalized text against the previous snapshot, with a content-hash gate to skip unchanged pages
+- [x] **MON-03**: System detects changes by diffing normalized text against the previous snapshot, with a content-hash gate to skip unchanged pages
 - [ ] **MON-04**: An LLM noise gate classifies each raw diff as meaningful vs. noise before any analysis runs
 - [x] **MON-05**: User can trigger an immediate check ("Check now") from the dashboard
 - [x] **MON-06**: Each monitored URL shows health status (last checked, last success, failure streak) so silent scraper failures are visible
@@ -97,7 +97,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MON-02 | Phase 2 | Complete |
 | MON-05 | Phase 2 | Complete |
 | MON-06 | Phase 2 | Complete |
-| MON-03 | Phase 3 | Pending |
+| MON-03 | Phase 3 | Complete |
 | MON-04 | Phase 4 | Pending |
 | AI-01 | Phase 4 | Pending |
 | AI-02 | Phase 4 | Pending |

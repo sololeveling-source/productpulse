@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
-stopped_at: Phase 02 complete (8/8 tasks) — ready to discuss Phase 3
-last_updated: 2026-07-04T04:22:00.000Z
+stopped_at: Phase 03 complete (4/4 tasks) — ready to discuss Phase 4
+last_updated: 2026-07-04T08:10:00.000Z
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 33
+  completed_phases: 3
+  total_plans: 12
+  completed_plans: 12
+  percent: 50
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 3 of 6 (change detection)
+Phase: 4 of 6 (AI analysis)
 Plan: Not started
 Status: Ready to plan
 
-Progress: [████░░░░░░] 33%
+Progress: [██████░░░░] 50%
 
 ### Phase 1 Plans (5/5 executed) — Complete
 
@@ -51,6 +51,15 @@ Progress: [████░░░░░░] 33%
 | 8 | page.tsx + competitor-table.tsx | ✓ Complete | "Check all" + health columns + per-source checks |
 | 9 | run.test.ts | ✓ Complete | Integration test scaffold |
 | 10 | E2E verification | ✓ Complete | Verified against https://linear.app/changelog |
+
+### Phase 3 Plans (4/4 tasks executed) — Complete
+
+| Task | File(s) | Status | Description |
+|------|---------|--------|-------------|
+| 1 | diff.ts + diff.test.ts | ✓ Complete | Unified text diff stage |
+| 2 | run.ts | ✓ Complete | Hash gate + snapshot/change insert on difference |
+| 3 | run.test.ts | ✓ Complete | Tests for unchanged gate, change creation, first check |
+| 4 | E2E verification | ✓ Complete | Soak-tested against https://linear.app/changelog; zero false-positive inserts on consecutive checks |
 
 ## Performance Metrics
 
@@ -105,16 +114,21 @@ Key decisions affecting current work:
 - [Phase 02-05]: Monitor route validates `sourceId` as a positive integer before calling the pipeline
 - [Phase 02-08]: Per-source ghost check buttons live inside the Monitored URLs cell so multi-source competitors have one trigger per URL
 - [Phase 02-10]: E2E verified end-to-end via the dev server and direct DB script against https://linear.app/changelog — snapshot + health fields updated correctly
+- [Phase 03-01]: `diff.ts` uses `diff.createPatch` with line-based output; the patch header for identical inputs is expected and does not contain real change lines
+- [Phase 03-02]: `run.ts` compares the latest snapshot's `contentHash` before any insert; unchanged pages only update health, unchanged pages create no snapshot or change row
+- [Phase 03-03]: First successful check for a source still creates a change record (diff against empty previous) — this is treated as initial discovery, not a false positive, and will be classified by the Phase 4 LLM noise gate
+- [Phase 03-04]: Snapshot insert now uses `.returning({ id: snapshots.id })` so the new `changes.to_snapshot_id` FK can be populated
+- [Phase 03-05]: E2E exposed source #7 pointing to `https://www.linear.com/pricing/changelog` (an Akamai error page with dynamic reference IDs); corrected it to `https://linear.app/changelog` before the soak test
 
 ### Pending Todos
 
-None — Phase 2 complete. Ready to discuss/plan Phase 3 (Change Detection).
+None — Phase 3 complete. Ready to discuss/plan Phase 4 (AI Analysis).
 
 ## Session Continuity
 
-Last session: 2026-07-04T04:22:00.000Z
-Stopped at: Phase 2 complete (8/8 tasks) — scraping pipeline, snapshots, and health verified end-to-end against real target. Ready to start Phase 3.
+Last session: 2026-07-04T08:10:00.000Z
+Stopped at: Phase 3 complete (4/4 tasks) — hash gate + diff stage + change records verified end-to-end with zero false positives on consecutive checks. Ready to start Phase 4.
 Resume file: None
 
 ---
-*Last updated: 2026-07-04 after Phase 2 resume and completion (Phase 2 complete)*
+*Last updated: 2026-07-04 after Phase 3 completion (MON-03 verified)*

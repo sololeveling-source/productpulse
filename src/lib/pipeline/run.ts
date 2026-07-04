@@ -1,13 +1,16 @@
 import { eq, and, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { sources, snapshots } from '@/lib/db/schema'
+import { sources, snapshots, changes } from '@/lib/db/schema'
 import { fetchPage } from './fetch'
 import { extractContent } from './extract'
+import { unifiedDiff } from './diff'
+import { getLatestSnapshot } from '@/lib/db/queries'
 
 export type RunReport = {
   sourceId: number
   url: string
   status: 'ok' | 'fetch_error' | 'challenge_page' | 'extract_empty'
+  changed?: boolean
   error?: string
 }
 
@@ -72,28 +75,47 @@ export async function runPipeline(opts?: { sourceId?: number }): Promise<RunRepo
         continue
       }
 
-      // Stage 3: Store snapshot
-      await db.insert(snapshots).values({
+      // Stage 3: Hash gate + change detection
+      const prevSnapshot = await getLatestSnapshot(source.id)
+
+      if (prevSnapshot?.contentHash === extractResult.contentHash) {
+        // Page unchanged: no new snapshot or change record needed.
+        await markSourceSuccess(source.id)
+        report.status = 'ok'
+        report.changed = false
+        reports.push(report)
+        continue
+      }
+
+      // Page changed (or this is the first successful check).
+      const [inserted] = await db
+        .insert(snapshots)
+        .values({
+          sourceId: source.id,
+          contentHash: extractResult.contentHash,
+          extractedText: extractResult.extractedText,
+          rawHtml: fetchResult.html,
+          httpStatus: fetchResult.httpStatus,
+        })
+        .returning({ id: snapshots.id })
+
+      const newSnapshotId = inserted!.id
+
+      const diffText = unifiedDiff(
+        prevSnapshot?.extractedText ?? '',
+        extractResult.extractedText,
+      )
+
+      await db.insert(changes).values({
         sourceId: source.id,
-        contentHash: extractResult.contentHash,
-        extractedText: extractResult.extractedText,
-        rawHtml: fetchResult.html,
-        httpStatus: fetchResult.httpStatus,
+        fromSnapshotId: prevSnapshot?.id ?? null,
+        toSnapshotId: newSnapshotId,
+        diffText,
       })
 
-      // Stage 4: Update health (success)
-      await db
-        .update(sources)
-        .set({
-          lastCheckedAt: new Date(),
-          lastSuccessAt: new Date(),
-          lastStatus: 'ok',
-          lastError: null,
-          failureStreak: 0,
-        })
-        .where(eq(sources.id, source.id))
-
+      await markSourceSuccess(source.id)
       report.status = 'ok'
+      report.changed = true
     } catch (err) {
       report.status = 'fetch_error'
       report.error = err instanceof Error ? err.message : 'Unknown error'
@@ -104,6 +126,19 @@ export async function runPipeline(opts?: { sourceId?: number }): Promise<RunRepo
   }
 
   return reports
+}
+
+async function markSourceSuccess(sourceId: number): Promise<void> {
+  await db
+    .update(sources)
+    .set({
+      lastCheckedAt: new Date(),
+      lastSuccessAt: new Date(),
+      lastStatus: 'ok',
+      lastError: null,
+      failureStreak: 0,
+    })
+    .where(eq(sources.id, sourceId))
 }
 
 async function updateSourceHealth(
