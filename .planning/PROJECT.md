@@ -12,7 +12,8 @@ The app automatically detects real competitor product changes (feature launches 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Competitor management: add/edit competitors and the URLs to monitor — Validated in Phase 1 (COMP-01, COMP-02), verified against production including edit reconciliation and delete cascade
+- [x] Deployed and publicly accessible as a live working demo — Validated in Phase 1: live on Vercel, hosted Neon Postgres persists across redeploys
 
 ### Active
 
@@ -22,8 +23,6 @@ The app automatically detects real competitor product changes (feature launches 
 - [ ] Intelligence feed as the primary screen: chronological stream of detected changes with AI insight
 - [ ] Competitor profile pages: per-competitor feature timeline and pricing history
 - [ ] AI-written periodic digest summarizing recent competitive activity
-- [ ] Competitor management: add/edit competitors and the URLs to monitor
-- [ ] Deployed and publicly accessible as a live working demo
 
 ### Out of Scope
 
@@ -53,11 +52,11 @@ The app automatically detects real competitor product changes (feature launches 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Automated monitoring over manual curation | AI-native automation is the core differentiator vs. manual-entry tools | — Pending |
-| Feed-first UX (profiles and digest build on the feed) | The "money screen" is the chronological insight feed | — Pending |
-| Single user, no auth in v1 | Portfolio demo; auth adds work without demonstrating the core value | — Pending |
-| Product signals only (features + pricing) | Narrow scope beats shallow breadth; explicitly not rebuilding all of Crayon | — Pending |
-| Free-tier infrastructure | Hobby budget; also demonstrates cost-conscious engineering | — Pending |
+| Automated monitoring over manual curation | AI-native automation is the core differentiator vs. manual-entry tools | — Pending (Phase 2+) |
+| Feed-first UX (profiles and digest build on the feed) | The "money screen" is the chronological insight feed | — Pending (Phase 5) |
+| Single user, no auth in v1 | Portfolio demo; auth adds work without demonstrating the core value | ✓ Validated Phase 1 — mutation Server Actions are publicly reachable by design, documented in README as an accepted risk |
+| Product signals only (features + pricing) | Narrow scope beats shallow breadth; explicitly not rebuilding all of Crayon | — Pending (Phase 2+) |
+| Free-tier infrastructure | Hobby budget; also demonstrates cost-conscious engineering | ✓ Validated Phase 1 — Neon free tier + Vercel Hobby, $0/mo so far |
 
 ## Evolution
 
@@ -77,4 +76,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-02 after initialization*
+*Last updated: 2026-07-04 after Phase 1 completion*
