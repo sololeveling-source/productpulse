@@ -33,7 +33,7 @@ export default function RootLayout({
         <TooltipProvider>
           <AppSidebar />
           <main className="ml-[240px] max-w-[1120px] p-6">{children}</main>
-          <Toaster />
+          <Toaster theme="dark" />
         </TooltipProvider>
       </body>
     </html>
