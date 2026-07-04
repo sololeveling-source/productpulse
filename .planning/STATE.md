@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-04-PLAN.md (edit reconcile-by-id + delete with confirmation)
-last_updated: "2026-07-04T01:36:00.576Z"
+status: ready_to_plan
+stopped_at: Phase 01 complete (5/5) — ready to discuss Phase 2
+last_updated: 2026-07-04T04:08:47.393Z
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 17
 ---
 
 # Project State
@@ -23,39 +23,40 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation & Competitor Management)
-Plan: 4 of 5 executed (01-03 complete)
-Status: Ready to execute
+Phase: 2 of 6 (scraping pipeline & snapshots)
+Plan: Not started
+Status: Ready to plan
 
-Progress: [████████░░] 80%
+Progress: [██░░░░░░░░] 17%
 
-### Phase 1 Plans (3/5 executed)
+### Phase 1 Plans (5/5 executed) — Complete
 
 | Wave | Plan File | Status | Description |
 |------|-----------|--------|-------------|
 | 1 | 01-01-PLAN.md | ✓ Complete | Next.js 16 scaffold + deps + dark shell |
 | 2 | 01-02-PLAN.md | ✓ Complete | Full schema + TDD validation rules |
 | 3 | 01-03-PLAN.md | ✓ Complete | Neon provision + drizzle push + add/list |
-| 4 | 01-04-PLAN.md | Ready | Edit (reconcile-by-id) + delete with confirmation |
-| 5 | 01-05-PLAN.md | Ready | GitHub push + Vercel deploy + E2E verification |
+| 4 | 01-04-PLAN.md | ✓ Complete | Edit (reconcile-by-id) + delete with confirmation |
+| 5 | 01-05-PLAN.md | ✓ Complete | GitHub push + Vercel deploy + E2E verification |
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3/5
-- Average duration: 30min
-- Total execution time: 90min
+- Total plans completed: 5/5
+- Average duration: ~40min
+- Total execution time: ~3h (includes ~2h interactive Vercel/GitHub troubleshooting on Plan 05)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|--------|----------|
-| 1 (Foundation) | 3/5 | 90min | 30min |
+| 1 (Foundation) | 5/5 | ~3h | ~40min |
 | Phase 01 P01 | 45min | 3 tasks | 34 files |
 | Phase 01 P02 | 20min | 2 tasks | 7 files |
 | Phase 01 P03 | 25min | 3 tasks | 8 files |
 | Phase 01 P04 | 15min | 2 tasks | 4 files |
+| Phase 01 P05 | ~2h | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -83,16 +84,19 @@ Key decisions affecting current work:
 - [Phase 01-04]: Reconcile-by-id edit strategy: never delete-and-reinsert child rows on update; every statement scoped by both child id and parent id to block cross-parent IDOR
 - [Phase 01-04]: CompetitorDialog stays a single component for add and edit (mode prop) rather than forking, running both useActionState hooks unconditionally and selecting by mode at render time
 - [Phase 01-04]: deleteCompetitor stayed a plain single-arg Server Action (no useActionState); success toast derived client-side via useFormStatus's pending-edge instead
+- [Phase 01-05]: Vercel project's Git integration was found connected to a Vercel-created sibling repo (productpulse1) instead of the intended sololeveling-source/productpulse — disconnected and reconnected to the correct repo; not a planning error, a Vercel onboarding artifact
+- [Phase 01-05]: Discovered a 'use server' file can only export async functions — initialCreateCompetitorState/initialUpdateCompetitorState (plain objects) passed local dev/build but hard-failed at runtime in Vercel's production build; moved to src/lib/action-state.ts. Pattern to carry forward for any future Server Action files
+- [Phase 01-05]: Phase 1 fully verified on production: public URL live, COMP-01/COMP-02 confirmed against hosted Neon, SSRF denylist blocks internal hosts with exact UI-SPEC copy, data persists across a Vercel redeploy
 
 ### Pending Todos
 
-- Plans 01-04 through 01-05 remain to execute in Phase 1 (edit/delete with confirmation, deploy)
+None — Phase 1 complete. Ready to discuss/plan Phase 2 (Scraping Pipeline & Snapshots).
 
 ## Session Continuity
 
-Last session: 2026-07-04T01:36:00.569Z
-Stopped at: Completed 01-04-PLAN.md (edit reconcile-by-id + delete with confirmation)
+Last session: 2026-07-04T04:08:47.393Z
+Stopped at: Phase 1 complete (5/5) — all success criteria verified on production. Ready to start Phase 2.
 Resume file: None
 
 ---
-*Last updated: 2026-07-03 after Plan 01-03 execution*
+*Last updated: 2026-07-04 after Plan 01-05 execution (Phase 1 complete)*

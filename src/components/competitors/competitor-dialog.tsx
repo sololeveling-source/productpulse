@@ -29,6 +29,7 @@ import {
   initialCreateCompetitorState,
   initialUpdateCompetitorState,
 } from '@/lib/action-state'
+import { INTERNAL_HOST_DENYLIST } from '@/lib/validation'
 import type { CompetitorWithSources } from '@/lib/db/queries'
 
 type UrlKind = 'changelog' | 'pricing'
@@ -70,19 +71,6 @@ const INTERNAL_HOST_ERROR =
   "This URL points to a private or internal address and can't be monitored."
 const NO_URLS_ERROR = 'Add at least one URL to monitor.'
 
-// Mirrors src/lib/validation.ts's urlSchema denylist — used here ONLY for
-// instant client-side error copy (no network round trip). The Server Action
-// (create/updateCompetitorSchema.safeParse in src/app/competitors/actions.ts)
-// remains the sole accept/reject security gate; this never changes what is
-// allowed to persist.
-const INTERNAL_HOSTS = new Set([
-  'localhost',
-  '127.0.0.1',
-  '169.254.169.254',
-  '0.0.0.0',
-  '::1',
-])
-
 function validateUrlField(raw: string): string | null {
   const trimmed = raw.trim()
   if (!trimmed) return GENERIC_URL_ERROR
@@ -96,7 +84,7 @@ function validateUrlField(raw: string): string | null {
     return GENERIC_URL_ERROR
   }
   const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '')
-  if (INTERNAL_HOSTS.has(hostname)) return INTERNAL_HOST_ERROR
+  if (INTERNAL_HOST_DENYLIST.has(hostname)) return INTERNAL_HOST_ERROR
   return null
 }
 
@@ -127,6 +115,11 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
   )
   const [clientErrors, setClientErrors] = useState<ClientFieldErrors>({})
   const formRef = useRef<HTMLFormElement>(null)
+  // Tracks whether a submission has happened since the dialog was last
+  // (re)opened, so a stale server-validation error from a prior session
+  // doesn't reappear on an untouched form (WR-03). Read during render (for
+  // serverFieldErrors/serverFormError below), so this must be state, not a ref.
+  const [hasSubmitted, setHasSubmitted] = useState(false)
 
   const [createState, createFormAction, createPending] = useActionState(
     createCompetitor,
@@ -141,13 +134,21 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
   const formAction = mode === 'edit' ? updateFormAction : createFormAction
   const pending = mode === 'edit' ? updatePending : createPending
 
+  // useActionState's `state` is a new object reference on every action
+  // completion, so comparing by identity (not just state.success) catches a
+  // second consecutive successful submit — comparing the primitive alone
+  // never re-fires since `true === true` across two successes (WR-04).
+  const prevStateRef = useRef(state)
   useEffect(() => {
-    if (state.success) {
-      toast.success(mode === 'edit' ? 'Changes saved' : 'Competitor added')
-      setOpen(false)
+    if (state !== prevStateRef.current) {
+      setHasSubmitted(true)
+      if (state.success) {
+        toast.success(mode === 'edit' ? 'Changes saved' : 'Competitor added')
+        setOpen(false)
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.success])
+    prevStateRef.current = state
+  }, [state, mode])
 
   function resetForm() {
     if (competitor) {
@@ -158,6 +159,7 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
       setRows([makeRow()])
     }
     setClientErrors({})
+    setHasSubmitted(false)
     formRef.current?.reset()
   }
 
@@ -207,8 +209,10 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
     rows.map((row) => ({ id: row.id, url: row.url, kind: row.kind })),
   )
 
-  const nameError = clientErrors.name ?? state.fieldErrors?.name
-  const urlsRootError = clientErrors.urlsRoot ?? state.fieldErrors?.urlsRoot
+  const serverFieldErrors = hasSubmitted ? state.fieldErrors : undefined
+  const serverFormError = hasSubmitted ? state.formError : undefined
+  const nameError = clientErrors.name ?? serverFieldErrors?.name
+  const urlsRootError = clientErrors.urlsRoot ?? serverFieldErrors?.urlsRoot
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -251,12 +255,12 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
             <input type="hidden" name="id" value={competitor.id} readOnly />
           )}
 
-          {state.formError && (
+          {serverFormError && (
             <div
               role="alert"
               className="rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-500"
             >
-              {state.formError}
+              {serverFormError}
             </div>
           )}
 
@@ -276,7 +280,7 @@ export function CompetitorDialog(props: CompetitorDialogProps) {
           <div className="flex flex-col gap-2">
             <Label>Monitored URLs</Label>
             {rows.map((row, index) => {
-              const rowError = clientErrors.urls?.[index] ?? state.fieldErrors?.urls?.[index]
+              const rowError = clientErrors.urls?.[index] ?? serverFieldErrors?.urls?.[index]
               return (
                 <div key={row.key} className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">

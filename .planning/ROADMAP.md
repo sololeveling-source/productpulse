@@ -13,7 +13,7 @@ ProductPulse ships as six vertical slices ordered by dependency and risk. Phase 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Competitor Management** — Deployed Next.js skeleton with schema and competitor/URL CRUD (5 waves planned, 1/5 executed)
+- [x] **Phase 1: Foundation & Competitor Management** — Deployed Next.js skeleton with schema and competitor/URL CRUD (5/5 executed, complete 2026-07-04)
 - [ ] **Phase 2: Scraping Pipeline & Snapshots** — Fetch → extract → normalize → snapshot against real targets, behind "Check now", with per-URL health
 - [ ] **Phase 3: Change Detection** — Hash gate + text diff producing change records, soak-tested to zero false positives
 - [ ] **Phase 4: AI Analysis** — LLM noise gate plus structured summary, "why it matters", and change-type classification with cost controls
@@ -36,27 +36,27 @@ Decimal phases appear between their surrounding integers in numeric order.
    3. User can edit and remove competitors and their monitored URLs
    4. Competitor and source data persists in hosted Postgres across sessions and redeploys (schema includes snapshots, changes, digests, published_at/detected_at, and per-source health fields)
 
-**Plans**: 5 waves planned; 1/5 executed (01-01 complete)
+**Plans**: 5 waves planned; 5/5 executed — Phase complete 2026-07-04
 
 **Wave 1: 01-01-PLAN.md — Scaffold Next.js 16 + pinned deps + dark app shell**
 Status: Complete
 Deliverables: Next.js 16 scaffold with pinned dependency set, genuine shadcn/ui (radix) components, dark-only app shell (240px sidebar, feed placeholder, competitors empty-state shell). Zero database code — schema arrives in Plan 01-02.
 
 **Wave 2: 01-02-PLAN.md — TDD validation rules + full schema + db client + drizzle config**
-Status: Awaiting Wave 1
+Status: Complete
 Deliverables: Complete Drizzle ORM schema with 6 tables, DB client wrapper using @neondatabase/serverless, TDD test suite validating SSRF gate rules
 
 **Wave 3: 01-03-PLAN.md — Neon provisioning + drizzle-kit push + COMP-01 add/list**
-Status: Awaiting Wave 2
+Status: Complete
 Deliverables: Neon provisioned and connected, schema pushed via drizzle-kit, competitor form creates one competitor linked to N sources, list view at /dashboard
 
 **Wave 4: 01-04-PLAN.md — Edit (reconcile-by-id) + delete with confirmation dialog**
-Status: Awaiting Wave 3
+Status: Complete
 Deliverables: Edit functionality via reconcile-by-id pattern, delete cascade removes all sources, confirm dialog before destructive actions
 
 **Wave 5: 01-05-PLAN.md — GitHub push + Vercel deploy + production E2E verification**
-Status: Awaiting Wave 4
-Deliverables: Production deployment with .env.local (not committed), public URL accessible, all 4 success criteria verified end-to-end
+Status: Complete
+Deliverables: Production deployment live on Vercel (public URL), all 4 success criteria verified end-to-end against production, including data persistence across a redeploy. Along the way: fixed a 'use server' export bug that only manifested in production, and corrected Vercel's Git integration which had connected to the wrong (Vercel-created) repo.
 
 ### Phase 2: Scraping Pipeline & Snapshots
 
@@ -99,7 +99,7 @@ Deliverables: Production deployment with .env.local (not committed), public URL 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|---------|-----------|
-| 1. Foundation & Competitor Management | 4/5 | In Progress|  |
+| 1. Foundation & Competitor Management | 5/5 | Complete | 2026-07-04 |
 | 2. Scraping Pipeline & Snapshots | - | Not started | - |
 | 3. Change Detection | - | Not started | - |
 | 4. AI Analysis | - | Not started | - |
@@ -109,4 +109,4 @@ Deliverables: Production deployment with .env.local (not committed), public URL 
 ---
 *Roadmap created: 2026-07-02*  
 *Phase 1 planned: 2026-07-03 (5 waves)*  
-*Last updated: Phase 1 planning complete*
+*Last updated: 2026-07-04 — Phase 1 complete, all 5 waves executed and verified on production*

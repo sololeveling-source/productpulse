@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const INTERNAL_HOST_DENYLIST = new Set([
+export const INTERNAL_HOST_DENYLIST = new Set([
   'localhost',
   '127.0.0.1',
   '169.254.169.254',

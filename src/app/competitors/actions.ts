@@ -2,25 +2,15 @@
 
 // Source pattern: nextjs.org/docs/app/getting-started/mutating-data
 import { revalidatePath } from 'next/cache'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { competitors, sources } from '@/lib/db/schema'
-import { createCompetitorSchema, updateCompetitorSchema } from '@/lib/validation'
-
-// Mirrors src/lib/validation.ts's INTERNAL_HOST_DENYLIST — used here ONLY to
-// classify *which* UI-SPEC copy a URL zod already rejected maps to (bad
-// scheme/format vs. blocked internal host). src/lib/validation.ts's
-// urlSchema remains the sole accept/reject security gate; this never changes
-// what passes validation, only which message is shown for something that
-// already failed.
-const INTERNAL_HOSTS = new Set([
-  'localhost',
-  '127.0.0.1',
-  '169.254.169.254',
-  '0.0.0.0',
-  '::1',
-])
+import {
+  createCompetitorSchema,
+  INTERNAL_HOST_DENYLIST,
+  updateCompetitorSchema,
+} from '@/lib/validation'
 
 const GENERIC_URL_ERROR = 'Enter a full URL starting with http:// or https://.'
 const INTERNAL_HOST_ERROR =
@@ -38,7 +28,7 @@ function describeUrlError(rawUrl: unknown): string {
     return GENERIC_URL_ERROR
   }
   const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '')
-  if (INTERNAL_HOSTS.has(hostname)) {
+  if (INTERNAL_HOST_DENYLIST.has(hostname)) {
     return INTERNAL_HOST_ERROR
   }
   return GENERIC_URL_ERROR
@@ -92,6 +82,10 @@ export async function createCompetitor(
             row && typeof row === 'object' ? (row as { url?: unknown }).url : undefined,
           )
         }
+      } else if (field === 'urls' && typeof index === 'number') {
+        if (!(index in urlErrors)) {
+          urlErrors[index] = 'This row is invalid. Remove and re-add it.'
+        }
       }
     }
 
@@ -110,18 +104,23 @@ export async function createCompetitor(
   })
 
   try {
-    const [competitor] = await db
-      .insert(competitors)
-      .values({ name: parsed.data.name })
-      .returning()
-
-    await db.insert(sources).values(
-      dedupedUrls.map((u) => ({
-        competitorId: competitor.id,
-        url: u.url,
-        kind: u.kind,
-      })),
+    // Atomic CTE insert: the sources insert depends on the competitor row's
+    // freshly-generated id, which db.batch() cannot express (each statement
+    // in a batch is prepared independently). A single INSERT...WITH keeps
+    // both writes in one statement, so a failure never leaves an orphan
+    // competitor row with zero monitored URLs.
+    const valuesSql = sql.join(
+      dedupedUrls.map((u) => sql`(${u.url}, ${u.kind})`),
+      sql`, `,
     )
+    await db.execute(sql`
+      WITH ins_competitor AS (
+        INSERT INTO competitors (name) VALUES (${parsed.data.name}) RETURNING id
+      )
+      INSERT INTO sources (competitor_id, url, kind)
+      SELECT ins_competitor.id, v.url, v.kind::source_kind
+      FROM ins_competitor, (VALUES ${valuesSql}) AS v(url, kind)
+    `)
   } catch {
     return {
       success: false,
@@ -185,6 +184,10 @@ export async function updateCompetitor(
             row && typeof row === 'object' ? (row as { url?: unknown }).url : undefined,
           )
         }
+      } else if (field === 'urls' && typeof index === 'number') {
+        if (!(index in urlErrors)) {
+          urlErrors[index] = 'This row is invalid. Remove and re-add it.'
+        }
       }
     }
 
@@ -205,11 +208,6 @@ export async function updateCompetitor(
   })
 
   try {
-    await db
-      .update(competitors)
-      .set({ name, updatedAt: new Date() })
-      .where(eq(competitors.id, competitorId))
-
     // Reconcile-by-id: never delete-and-reinsert. snapshots FK-cascades from
     // sources, so recreating a source row would silently wipe Phase 2+
     // history for an unchanged URL. Every statement below is scoped by BOTH
@@ -222,30 +220,49 @@ export async function updateCompetitor(
     const existingIds = new Set(existingSources.map((s) => s.id))
 
     const payloadIds = new Set<number>()
+    const writeStatements = []
     for (const row of dedupedUrls) {
       if (row.id != null && existingIds.has(row.id)) {
         payloadIds.add(row.id)
-        await db
-          .update(sources)
-          .set({ url: row.url, kind: row.kind })
-          .where(and(eq(sources.id, row.id), eq(sources.competitorId, competitorId)))
+        writeStatements.push(
+          db
+            .update(sources)
+            .set({ url: row.url, kind: row.kind })
+            .where(and(eq(sources.id, row.id), eq(sources.competitorId, competitorId))),
+        )
       } else {
-        await db.insert(sources).values({
-          competitorId,
-          url: row.url,
-          kind: row.kind,
-        })
+        writeStatements.push(
+          db.insert(sources).values({
+            competitorId,
+            url: row.url,
+            kind: row.kind,
+          }),
+        )
       }
     }
 
     const idsToDelete = [...existingIds].filter((id) => !payloadIds.has(id))
     if (idsToDelete.length > 0) {
-      await db
-        .delete(sources)
-        .where(
-          and(inArray(sources.id, idsToDelete), eq(sources.competitorId, competitorId)),
-        )
+      writeStatements.push(
+        db
+          .delete(sources)
+          .where(
+            and(inArray(sources.id, idsToDelete), eq(sources.competitorId, competitorId)),
+          ),
+      )
     }
+
+    // Atomic batch — competitors.name and every sources reconciliation
+    // statement commit together or not at all, so a failure partway through
+    // (e.g. a unique-index hit from swapping two URLs) never leaves the
+    // sources table in a state matching neither the pre- nor post-edit intent.
+    await db.batch([
+      db
+        .update(competitors)
+        .set({ name, updatedAt: new Date() })
+        .where(eq(competitors.id, competitorId)),
+      ...writeStatements,
+    ])
   } catch {
     return {
       success: false,
@@ -261,8 +278,12 @@ export async function deleteCompetitor(formData: FormData): Promise<void> {
   const parsed = z.coerce.number().int().positive().safeParse(formData.get('id'))
   if (!parsed.success) return
 
-  // sources cascade-delete via the schema's onDelete: 'cascade' FK — no
-  // explicit sources delete statement needed (and none is written here).
-  await db.delete(competitors).where(eq(competitors.id, parsed.data))
+  try {
+    // sources cascade-delete via the schema's onDelete: 'cascade' FK — no
+    // explicit sources delete statement needed (and none is written here).
+    await db.delete(competitors).where(eq(competitors.id, parsed.data))
+  } catch {
+    return
+  }
   revalidatePath('/competitors')
 }

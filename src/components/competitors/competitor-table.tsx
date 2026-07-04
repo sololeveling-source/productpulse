@@ -35,11 +35,6 @@ function relativeDate(date: Date): string {
   return relativeTimeFormatter.format(0, 'second')
 }
 
-const KIND_LABEL: Record<string, string> = {
-  changelog: 'changelog',
-  pricing: 'pricing',
-}
-
 export function CompetitorTable({
   competitors,
 }: {
@@ -81,7 +76,7 @@ export function CompetitorTable({
                         variant="secondary"
                         className="bg-zinc-800 text-zinc-400"
                       >
-                        {KIND_LABEL[source.kind] ?? source.kind}
+                        {source.kind}
                       </Badge>
                       <span
                         title={source.url}
