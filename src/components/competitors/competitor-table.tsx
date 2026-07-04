@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { CheckNowButton } from './check-now-button'
 import { CompetitorDialog } from './competitor-dialog'
 import { DeleteCompetitorDialog } from './delete-competitor-dialog'
 import type { CompetitorWithSources } from '@/lib/db/queries'
@@ -35,6 +36,19 @@ function relativeDate(date: Date): string {
   return relativeTimeFormatter.format(0, 'second')
 }
 
+function StatusDot({ status }: { status: string | null }) {
+  const color =
+    status === 'ok' ? 'bg-emerald-500' :
+    status != null ? 'bg-red-500' :
+    'bg-zinc-600'
+  return (
+    <span
+      className={`inline-block size-2 rounded-full ${color}`}
+      title={status ?? 'never checked'}
+    />
+  )
+}
+
 export function CompetitorTable({
   competitors,
 }: {
@@ -50,6 +64,12 @@ export function CompetitorTable({
             </TableHead>
             <TableHead className="text-xs font-normal tracking-wide text-zinc-400 uppercase">
               Monitored URLs
+            </TableHead>
+            <TableHead className="text-xs font-normal tracking-wide text-zinc-400 uppercase">
+              Health
+            </TableHead>
+            <TableHead className="text-xs font-normal tracking-wide text-zinc-400 uppercase">
+              Last checked
             </TableHead>
             <TableHead className="text-xs font-normal tracking-wide text-zinc-400 uppercase">
               Added
@@ -80,10 +100,44 @@ export function CompetitorTable({
                       </Badge>
                       <span
                         title={source.url}
-                        className="max-w-[360px] truncate font-mono text-sm text-zinc-300"
+                        className="max-w-[280px] truncate font-mono text-sm text-zinc-300"
                       >
                         {source.url}
                       </span>
+                      <CheckNowButton
+                        sourceId={source.id}
+                        variant="ghost"
+                        label={`Check ${competitor.name} ${source.kind}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell className="py-3 align-top whitespace-normal">
+                <div className="flex flex-col gap-1.5">
+                  {competitor.sources.map((source) => (
+                    <div key={source.id} className="flex items-center gap-2">
+                      <StatusDot status={source.lastStatus} />
+                      <span className="text-xs text-zinc-400">
+                        {source.lastStatus ?? '—'}
+                      </span>
+                      {source.failureStreak > 0 && (
+                        <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-500">
+                          {source.failureStreak}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell className="py-3 align-top text-xs text-zinc-400">
+                <div className="flex flex-col gap-1.5">
+                  {competitor.sources.map((source) => (
+                    <div key={source.id} className="h-6 leading-6">
+                      {source.lastCheckedAt
+                        ? relativeDate(source.lastCheckedAt)
+                        : '—'
+                      }
                     </div>
                   ))}
                 </div>

@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic'
 
 import { listCompetitorsWithSources } from '@/lib/db/queries'
+import { CheckNowButton } from '@/components/competitors/check-now-button'
 import { CompetitorDialog } from '@/components/competitors/competitor-dialog'
 import { CompetitorTable } from '@/components/competitors/competitor-table'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,10 @@ export default async function CompetitorsPage() {
         <h1 className="text-[28px] leading-tight font-semibold text-zinc-50">
           Competitors
         </h1>
-        <CompetitorDialog mode="add" trigger={<Button>Add competitor</Button>} />
+        <div className="flex items-center gap-2">
+          <CheckNowButton label="Check all" />
+          <CompetitorDialog mode="add" trigger={<Button>Add competitor</Button>} />
+        </div>
       </div>
 
       {competitors.length === 0 ? (
