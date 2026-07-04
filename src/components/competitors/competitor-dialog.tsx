@@ -27,12 +27,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   createCompetitor,
   initialCreateCompetitorState,
+  initialUpdateCompetitorState,
+  updateCompetitor,
 } from '@/app/competitors/actions'
+import type { CompetitorWithSources } from '@/lib/db/queries'
 
 type UrlKind = 'changelog' | 'pricing'
 
 type UrlRow = {
   key: string
+  // Present only for rows carrying an existing DB source — lets
+  // updateCompetitor reconcile-by-id instead of delete-and-reinsert.
+  id?: number
   url: string
   kind: UrlKind
 }
@@ -48,6 +54,16 @@ function makeRow(): UrlRow {
   }
 }
 
+function rowsFromCompetitor(competitor: CompetitorWithSources): UrlRow[] {
+  if (competitor.sources.length === 0) return [makeRow()]
+  return competitor.sources.map((source) => ({
+    key: String(source.id),
+    id: source.id,
+    url: source.url,
+    kind: source.kind,
+  }))
+}
+
 // Exact UI-SPEC copy (Copywriting Contract — Form validation errors).
 const NAME_ERROR = 'Enter a competitor name.'
 const GENERIC_URL_ERROR = 'Enter a full URL starting with http:// or https://.'
@@ -57,7 +73,7 @@ const NO_URLS_ERROR = 'Add at least one URL to monitor.'
 
 // Mirrors src/lib/validation.ts's urlSchema denylist — used here ONLY for
 // instant client-side error copy (no network round trip). The Server Action
-// (createCompetitorSchema.safeParse in src/app/competitors/actions.ts)
+// (create/updateCompetitorSchema.safeParse in src/app/competitors/actions.ts)
 // remains the sole accept/reject security gate; this never changes what is
 // allowed to persist.
 const INTERNAL_HOSTS = new Set([
@@ -91,35 +107,57 @@ type ClientFieldErrors = {
   urls?: Record<number, string>
 }
 
-export function CompetitorDialog({
-  mode,
-  trigger,
-}: {
-  mode: 'add'
-  trigger: React.ReactNode
-}) {
-  void mode // only 'add' is implemented this plan; Plan 04 adds 'edit'
+type CompetitorDialogProps =
+  | { mode: 'add'; trigger: React.ReactNode; tooltipLabel?: string }
+  | {
+      mode: 'edit'
+      trigger: React.ReactNode
+      tooltipLabel?: string
+      competitor: CompetitorWithSources
+    }
+
+export function CompetitorDialog(props: CompetitorDialogProps) {
+  const { trigger, tooltipLabel } = props
+  const mode = props.mode
+  const competitor = props.mode === 'edit' ? props.competitor : undefined
 
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [rows, setRows] = useState<UrlRow[]>(() => [makeRow()])
+  const [name, setName] = useState(competitor?.name ?? '')
+  const [rows, setRows] = useState<UrlRow[]>(() =>
+    competitor ? rowsFromCompetitor(competitor) : [makeRow()],
+  )
   const [clientErrors, setClientErrors] = useState<ClientFieldErrors>({})
   const formRef = useRef<HTMLFormElement>(null)
-  const [state, formAction, pending] = useActionState(
+
+  const [createState, createFormAction, createPending] = useActionState(
     createCompetitor,
     initialCreateCompetitorState,
   )
+  const [updateState, updateFormAction, updatePending] = useActionState(
+    updateCompetitor,
+    initialUpdateCompetitorState,
+  )
+
+  const state = mode === 'edit' ? updateState : createState
+  const formAction = mode === 'edit' ? updateFormAction : createFormAction
+  const pending = mode === 'edit' ? updatePending : createPending
 
   useEffect(() => {
     if (state.success) {
-      toast.success('Competitor added')
+      toast.success(mode === 'edit' ? 'Changes saved' : 'Competitor added')
       setOpen(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success])
 
   function resetForm() {
-    setName('')
-    setRows([makeRow()])
+    if (competitor) {
+      setName(competitor.name)
+      setRows(rowsFromCompetitor(competitor))
+    } else {
+      setName('')
+      setRows([makeRow()])
+    }
     setClientErrors({})
     formRef.current?.reset()
   }
@@ -167,7 +205,7 @@ export function CompetitorDialog({
   }
 
   const urlsPayload = JSON.stringify(
-    rows.map((row) => ({ url: row.url, kind: row.kind })),
+    rows.map((row) => ({ id: row.id, url: row.url, kind: row.kind })),
   )
 
   const nameError = clientErrors.name ?? state.fieldErrors?.name
@@ -175,7 +213,16 @@ export function CompetitorDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {tooltipLabel ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{tooltipLabel}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      )}
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogClose
           aria-label="Close dialog"
@@ -186,10 +233,12 @@ export function CompetitorDialog({
 
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-zinc-50">
-            Add competitor
+            {mode === 'edit' ? `Edit ${competitor?.name ?? ''}` : 'Add competitor'}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Add a competitor and the URLs you want ProductPulse to monitor.
+            {mode === 'edit'
+              ? 'Edit this competitor and the URLs ProductPulse monitors for it.'
+              : 'Add a competitor and the URLs you want ProductPulse to monitor.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -199,6 +248,10 @@ export function CompetitorDialog({
           onSubmit={handleSubmit}
           className="flex flex-col gap-4"
         >
+          {mode === 'edit' && competitor && (
+            <input type="hidden" name="id" value={competitor.id} readOnly />
+          )}
+
           {state.formError && (
             <div
               role="alert"
@@ -289,7 +342,7 @@ export function CompetitorDialog({
           <DialogFooter className="border-t-0 bg-transparent p-0 pt-2">
             <Button type="submit" disabled={pending}>
               {pending && <Loader2 className="animate-spin" />}
-              Add competitor
+              {mode === 'edit' ? 'Save changes' : 'Add competitor'}
             </Button>
           </DialogFooter>
         </form>

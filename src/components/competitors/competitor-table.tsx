@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -7,6 +8,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { CompetitorDialog } from './competitor-dialog'
+import { DeleteCompetitorDialog } from './delete-competitor-dialog'
 import type { CompetitorWithSources } from '@/lib/db/queries'
 
 const RELATIVE_DIVISIONS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -93,7 +97,27 @@ export function CompetitorTable({
                 {relativeDate(competitor.createdAt)}
               </TableCell>
               <TableCell className="py-3 text-right align-top">
-                {/* Edit/delete icon buttons arrive in Plan 04 */}
+                <div className="flex items-center justify-end gap-1">
+                  <CompetitorDialog
+                    mode="edit"
+                    competitor={competitor}
+                    tooltipLabel="Edit"
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Edit ${competitor.name}`}
+                      >
+                        <Pencil />
+                      </Button>
+                    }
+                  />
+                  <DeleteCompetitorDialog
+                    competitorId={competitor.id}
+                    competitorName={competitor.name}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}
