@@ -15,11 +15,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Monitoring & Change Detection
 
 - [ ] **MON-01**: System automatically checks all monitored URLs on a daily schedule
-- [ ] **MON-02**: System stores a snapshot of extracted, normalized page content per check
+- [x] **MON-02**: System stores a snapshot of extracted, normalized page content per check
 - [ ] **MON-03**: System detects changes by diffing normalized text against the previous snapshot, with a content-hash gate to skip unchanged pages
 - [ ] **MON-04**: An LLM noise gate classifies each raw diff as meaningful vs. noise before any analysis runs
-- [ ] **MON-05**: User can trigger an immediate check ("Check now") from the dashboard
-- [ ] **MON-06**: Each monitored URL shows health status (last checked, last success, failure streak) so silent scraper failures are visible
+- [x] **MON-05**: User can trigger an immediate check ("Check now") from the dashboard
+- [x] **MON-06**: Each monitored URL shows health status (last checked, last success, failure streak) so silent scraper failures are visible
 
 ### AI Analysis
 
@@ -94,9 +94,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | COMP-01 | Phase 1 | Complete |
 | COMP-02 | Phase 1 | Complete |
-| MON-02 | Phase 2 | Pending |
-| MON-05 | Phase 2 | Pending |
-| MON-06 | Phase 2 | Pending |
+| MON-02 | Phase 2 | Complete |
+| MON-05 | Phase 2 | Complete |
+| MON-06 | Phase 2 | Complete |
 | MON-03 | Phase 3 | Pending |
 | MON-04 | Phase 4 | Pending |
 | AI-01 | Phase 4 | Pending |
@@ -119,4 +119,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-07-02*
-*Last updated: 2026-07-02 after roadmap creation (traceability populated)*
+*Last updated: 2026-07-04 after Phase 2 completion (MON-02, MON-05, MON-06 validated)*

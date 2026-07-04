@@ -14,6 +14,8 @@ The app automatically detects real competitor product changes (feature launches 
 
 - [x] Competitor management: add/edit competitors and the URLs to monitor — Validated in Phase 1 (COMP-01, COMP-02), verified against production including edit reconciliation and delete cascade
 - [x] Deployed and publicly accessible as a live working demo — Validated in Phase 1: live on Vercel, hosted Neon Postgres persists across redeploys
+- [x] Snapshots and per-URL health from real checks — Validated in Phase 2 (MON-02, MON-06): pipeline fetches, extracts, normalizes, and stores snapshots; dashboard shows status, last checked, and failure streak
+- [x] Manual "Check now" trigger — Validated in Phase 2 (MON-05): per-source and all-sources buttons call the same pipeline as future scheduled runs
 
 ### Active
 
@@ -52,10 +54,10 @@ The app automatically detects real competitor product changes (feature launches 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Automated monitoring over manual curation | AI-native automation is the core differentiator vs. manual-entry tools | — Pending (Phase 2+) |
+| Automated monitoring over manual curation | AI-native automation is the core differentiator vs. manual-entry tools | ✓ Manual trigger + pipeline validated Phase 2; scheduling in Phase 5 |
 | Feed-first UX (profiles and digest build on the feed) | The "money screen" is the chronological insight feed | — Pending (Phase 5) |
 | Single user, no auth in v1 | Portfolio demo; auth adds work without demonstrating the core value | ✓ Validated Phase 1 — mutation Server Actions are publicly reachable by design, documented in README as an accepted risk |
-| Product signals only (features + pricing) | Narrow scope beats shallow breadth; explicitly not rebuilding all of Crayon | — Pending (Phase 2+) |
+| Product signals only (features + pricing) | Narrow scope beats shallow breadth; explicitly not rebuilding all of Crayon | ✓ Pipeline targets changelog/pricing URLs only, validated Phase 2 |
 | Free-tier infrastructure | Hobby budget; also demonstrates cost-conscious engineering | ✓ Validated Phase 1 — Neon free tier + Vercel Hobby, $0/mo so far |
 
 ## Evolution
@@ -76,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-04 after Phase 1 completion*
+*Last updated: 2026-07-04 after Phase 2 completion*

@@ -14,7 +14,7 @@ ProductPulse ships as six vertical slices ordered by dependency and risk. Phase 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Competitor Management** — Deployed Next.js skeleton with schema and competitor/URL CRUD (5/5 executed, complete 2026-07-04)
-- [ ] **Phase 2: Scraping Pipeline & Snapshots** — Fetch → extract → normalize → snapshot against real targets, behind "Check now", with per-URL health
+- [x] **Phase 2: Scraping Pipeline & Snapshots** — Fetch → extract → normalize → snapshot against real targets, behind "Check now", with per-URL health (8/8 tasks, complete 2026-07-04)
 - [ ] **Phase 3: Change Detection** — Hash gate + text diff producing change records, soak-tested to zero false positives
 - [ ] **Phase 4: AI Analysis** — LLM noise gate plus structured summary, "why it matters", and change-type classification with cost controls
 - [ ] **Phase 5: Intelligence Feed & Scheduled Deployment** — Filterable evidence-backed feed plus GitHub Actions daily cron monitoring real competitors from production
@@ -63,7 +63,19 @@ Deliverables: Production deployment live on Vercel (public URL), all 4 success c
 **Goal**: The user can trigger a real check and see clean, normalized content snapshots and per-URL health for actual competitor pages
 **Mode:** mvp  
 **Depends on**: Phase 1  
-**Requirements**: MON-02, MON-05, MON-06
+**Requirements**: MON-02, MON-05, MON-06  
+**Status**: Complete (8/8 tasks, 2026-07-04)
+
+**Deliverables**:
+- `src/lib/pipeline/fetch.ts` — HTTP fetch with 15s timeout, realistic UA, challenge-page detection
+- `src/lib/pipeline/extract.ts` — cheerio + turndown normalization, SHA-256 hash, 50-char minimum threshold
+- `src/lib/pipeline/run.ts` — per-source orchestrator, error isolation, snapshot insert, health updates
+- `src/app/api/monitor/route.ts` — POST route (`?sourceId=N` optional) returning `RunReport[]`
+- `src/components/competitors/check-now-button.tsx` — loading state + sonner toast summary
+- Competitors UI — "Check all" header button, Health + Last checked columns, per-source ghost check buttons
+- `src/lib/db/queries.ts` — `getLatestSnapshot(sourceId)` for Phase 3 readiness
+- Tests for `extract.ts` and `runPipeline` scaffold
+- E2E verification against `https://linear.app/changelog`
 
 ### Phase 3: Change Detection
 
@@ -100,7 +112,8 @@ Deliverables: Production deployment live on Vercel (public URL), all 4 success c
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|---------|-----------|
 | 1. Foundation & Competitor Management | 5/5 | Complete | 2026-07-04 |
-| 2. Scraping Pipeline & Snapshots | - | Not started | - |
+| 2. Scraping Pipeline & Snapshots | 8/8 | Complete | 2026-07-04 |
+| 3. Change Detection | - | Not started | - |
 | 3. Change Detection | - | Not started | - |
 | 4. AI Analysis | - | Not started | - |
 | 5. Intelligence Feed & Scheduled Deployment | - | Not started | - |
@@ -109,4 +122,5 @@ Deliverables: Production deployment live on Vercel (public URL), all 4 success c
 ---
 *Roadmap created: 2026-07-02*  
 *Phase 1 planned: 2026-07-03 (5 waves)*  
-*Last updated: 2026-07-04 — Phase 1 complete, all 5 waves executed and verified on production*
+*Phase 2 resumed: 2026-07-04 (8 tasks)*  
+*Last updated: 2026-07-04 — Phase 2 complete, E2E verified against real competitor target*

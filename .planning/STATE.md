@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
-stopped_at: Phase 01 complete (5/5) — ready to discuss Phase 2
-last_updated: 2026-07-04T04:08:47.393Z
+stopped_at: Phase 02 complete (8/8 tasks) — ready to discuss Phase 3
+last_updated: 2026-07-04T04:22:00.000Z
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 17
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 8
+  percent: 33
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 2 of 6 (scraping pipeline & snapshots)
+Phase: 3 of 6 (change detection)
 Plan: Not started
 Status: Ready to plan
 
-Progress: [██░░░░░░░░] 17%
+Progress: [████░░░░░░] 33%
 
 ### Phase 1 Plans (5/5 executed) — Complete
 
@@ -38,6 +38,19 @@ Progress: [██░░░░░░░░] 17%
 | 3 | 01-03-PLAN.md | ✓ Complete | Neon provision + drizzle push + add/list |
 | 4 | 01-04-PLAN.md | ✓ Complete | Edit (reconcile-by-id) + delete with confirmation |
 | 5 | 01-05-PLAN.md | ✓ Complete | GitHub push + Vercel deploy + E2E verification |
+
+### Phase 2 Plans (8/8 tasks executed) — Complete
+
+| Task | File(s) | Status | Description |
+|------|---------|--------|-------------|
+| 3 | extract.ts + extract.test.ts | ✓ Complete | HTML → normalized Markdown + SHA-256 hash |
+| 4 | run.ts | ✓ Complete | Pipeline orchestrator with per-source error isolation |
+| 5 | /api/monitor/route.ts | ✓ Complete | POST route for manual trigger |
+| 6 | queries.ts | ✓ Complete | getLatestSnapshot for Phase 3 readiness |
+| 7 | check-now-button.tsx | ✓ Complete | Client button with loading + toast summary |
+| 8 | page.tsx + competitor-table.tsx | ✓ Complete | "Check all" + health columns + per-source checks |
+| 9 | run.test.ts | ✓ Complete | Integration test scaffold |
+| 10 | E2E verification | ✓ Complete | Verified against https://linear.app/changelog |
 
 ## Performance Metrics
 
@@ -87,16 +100,21 @@ Key decisions affecting current work:
 - [Phase 01-05]: Vercel project's Git integration was found connected to a Vercel-created sibling repo (productpulse1) instead of the intended sololeveling-source/productpulse — disconnected and reconnected to the correct repo; not a planning error, a Vercel onboarding artifact
 - [Phase 01-05]: Discovered a 'use server' file can only export async functions — initialCreateCompetitorState/initialUpdateCompetitorState (plain objects) passed local dev/build but hard-failed at runtime in Vercel's production build; moved to src/lib/action-state.ts. Pattern to carry forward for any future Server Action files
 - [Phase 01-05]: Phase 1 fully verified on production: public URL live, COMP-01/COMP-02 confirmed against hosted Neon, SSRF denylist blocks internal hosts with exact UI-SPEC copy, data persists across a Vercel redeploy
+- [Phase 02-03]: extract.ts unit tests needed longer HTML than the brief's examples because the 50-char minimum-content threshold filters out trivial inputs
+- [Phase 02-04]: run.ts failure-streak increment uses drizzle-orm `sql` template literal to avoid a read-modify-write race
+- [Phase 02-05]: Monitor route validates `sourceId` as a positive integer before calling the pipeline
+- [Phase 02-08]: Per-source ghost check buttons live inside the Monitored URLs cell so multi-source competitors have one trigger per URL
+- [Phase 02-10]: E2E verified end-to-end via the dev server and direct DB script against https://linear.app/changelog — snapshot + health fields updated correctly
 
 ### Pending Todos
 
-None — Phase 1 complete. Ready to discuss/plan Phase 2 (Scraping Pipeline & Snapshots).
+None — Phase 2 complete. Ready to discuss/plan Phase 3 (Change Detection).
 
 ## Session Continuity
 
-Last session: 2026-07-04T04:08:47.393Z
-Stopped at: Phase 1 complete (5/5) — all success criteria verified on production. Ready to start Phase 2.
+Last session: 2026-07-04T04:22:00.000Z
+Stopped at: Phase 2 complete (8/8 tasks) — scraping pipeline, snapshots, and health verified end-to-end against real target. Ready to start Phase 3.
 Resume file: None
 
 ---
-*Last updated: 2026-07-04 after Plan 01-05 execution (Phase 1 complete)*
+*Last updated: 2026-07-04 after Phase 2 resume and completion (Phase 2 complete)*
