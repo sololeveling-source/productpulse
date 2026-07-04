@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProductPulse
 
-## Getting Started
+A competitive intelligence app that automatically monitors competitors' changelogs, release notes, and pricing pages, detects changes, and uses AI to explain what changed and why it matters. Portfolio/learning project in the spirit of Crayon Intelligence — AI-native, focused purely on product signals rather than broad market intel.
 
-First, run the development server:
+## Stack
+
+Next.js 16, Drizzle ORM 0.45, Neon Postgres, Tailwind 4 / shadcn/ui, deployed on Vercel.
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+corepack enable
+pnpm install
+cp .env.example .env   # fill in your Neon connection strings
+npx drizzle-kit push   # applies the schema to your Neon database
+npx next dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Pooled Neon connection string (host contains `-pooler`). Used by the app at runtime via `drizzle-orm/neon-http`. |
+| `DATABASE_URL_UNPOOLED` | Direct (unpooled) Neon connection string. Used **only** by `drizzle-kit` for schema push/generate/migrate — never run `drizzle-kit push` in CI or on Vercel; it's a local dev-machine operation. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Expected behavior
 
-## Learn More
+- **Cold start / autosuspend**: Neon's free tier suspends the compute after 5 minutes of inactivity. The first request after idle takes roughly 0.5–2s while it wakes up — this is expected and not a bug; no keep-alive pinger is used.
 
-To learn more about Next.js, take a look at the following resources:
+## Security note
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This is a single-user portfolio demo with **no authentication** by design. Mutation endpoints (add/edit/delete competitor) are publicly reachable. Inputs are validated with zod, including an SSRF host denylist that blocks internal/private addresses. This is an accepted risk for a demo-scale build — revisit before any multi-user use.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tests
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx vitest run
+```
