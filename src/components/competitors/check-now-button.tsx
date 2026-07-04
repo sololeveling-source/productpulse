@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, Play } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ export function CheckNowButton({
   variant = 'default',
 }: CheckNowButtonProps) {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   async function handleClick() {
     setLoading(true)
@@ -43,6 +45,9 @@ export function CheckNowButton({
           `Checked ${results.length} source${results.length > 1 ? 's' : ''} — ${ok} OK, ${errors} error${errors > 1 ? 's' : ''}`,
         )
       }
+
+      // Refresh server-rendered table data so health/last-checked columns update.
+      router.refresh()
     } catch {
       toast.error('Network error. Check your connection and try again.')
     } finally {
