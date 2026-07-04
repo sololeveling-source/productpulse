@@ -56,10 +56,6 @@ export type CreateCompetitorState = {
   fieldErrors?: CreateCompetitorFieldErrors
 }
 
-export const initialCreateCompetitorState: CreateCompetitorState = {
-  success: false,
-}
-
 export async function createCompetitor(
   _prevState: CreateCompetitorState,
   formData: FormData,
@@ -143,10 +139,6 @@ export type UpdateCompetitorState = {
   success: boolean
   formError?: string
   fieldErrors?: UpdateCompetitorFieldErrors
-}
-
-export const initialUpdateCompetitorState: UpdateCompetitorState = {
-  success: false,
 }
 
 export async function updateCompetitor(

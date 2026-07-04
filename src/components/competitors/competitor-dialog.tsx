@@ -24,12 +24,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { createCompetitor, updateCompetitor } from '@/app/competitors/actions'
 import {
-  createCompetitor,
   initialCreateCompetitorState,
   initialUpdateCompetitorState,
-  updateCompetitor,
-} from '@/app/competitors/actions'
+} from '@/lib/action-state'
 import type { CompetitorWithSources } from '@/lib/db/queries'
 
 type UrlKind = 'changelog' | 'pricing'
