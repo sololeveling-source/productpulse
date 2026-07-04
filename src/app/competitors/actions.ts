@@ -2,9 +2,11 @@
 
 // Source pattern: nextjs.org/docs/app/getting-started/mutating-data
 import { revalidatePath } from 'next/cache'
+import { and, eq, inArray } from 'drizzle-orm'
+import { z } from 'zod'
 import { db } from '@/lib/db'
 import { competitors, sources } from '@/lib/db/schema'
-import { createCompetitorSchema } from '@/lib/validation'
+import { createCompetitorSchema, updateCompetitorSchema } from '@/lib/validation'
 
 // Mirrors src/lib/validation.ts's INTERNAL_HOST_DENYLIST — used here ONLY to
 // classify *which* UI-SPEC copy a URL zod already rejected maps to (bad
@@ -133,4 +135,142 @@ export async function createCompetitor(
 
   revalidatePath('/competitors')
   return { success: true }
+}
+
+export type UpdateCompetitorFieldErrors = CreateCompetitorFieldErrors
+
+export type UpdateCompetitorState = {
+  success: boolean
+  formError?: string
+  fieldErrors?: UpdateCompetitorFieldErrors
+}
+
+export const initialUpdateCompetitorState: UpdateCompetitorState = {
+  success: false,
+}
+
+export async function updateCompetitor(
+  _prevState: UpdateCompetitorState,
+  formData: FormData,
+): Promise<UpdateCompetitorState> {
+  let rawUrls: unknown
+  try {
+    rawUrls = JSON.parse(String(formData.get('urls') ?? '[]'))
+  } catch {
+    return {
+      success: false,
+      formError: "Couldn't save competitor. Check your connection and try again.",
+    }
+  }
+
+  const parsed = updateCompetitorSchema.safeParse({
+    id: formData.get('id'),
+    name: formData.get('name'),
+    urls: rawUrls,
+  })
+
+  if (!parsed.success) {
+    const fieldErrors: UpdateCompetitorFieldErrors = {}
+    const urlErrors: Record<number, string> = {}
+
+    for (const issue of parsed.error.issues) {
+      const [field, index, sub] = issue.path
+      if (field === 'id') {
+        // No user-visible id field to attach this to — a forged/missing id
+        // is treated as a generic save failure, not a field-level error.
+        return {
+          success: false,
+          formError: "Couldn't save competitor. Check your connection and try again.",
+        }
+      } else if (field === 'name') {
+        fieldErrors.name = 'Enter a competitor name.'
+      } else if (field === 'urls' && issue.path.length === 1) {
+        fieldErrors.urlsRoot = 'Add at least one URL to monitor.'
+      } else if (field === 'urls' && typeof index === 'number' && sub === 'url') {
+        if (!(index in urlErrors)) {
+          const row = Array.isArray(rawUrls) ? rawUrls[index] : undefined
+          urlErrors[index] = describeUrlError(
+            row && typeof row === 'object' ? (row as { url?: unknown }).url : undefined,
+          )
+        }
+      }
+    }
+
+    if (Object.keys(urlErrors).length > 0) fieldErrors.urls = urlErrors
+
+    return { success: false, fieldErrors }
+  }
+
+  const { id: competitorId, name, urls } = parsed.data
+
+  // Guard the (competitor_id, url) composite unique index against duplicate
+  // rows submitted in the same request.
+  const seen = new Set<string>()
+  const dedupedUrls = urls.filter((u) => {
+    if (seen.has(u.url)) return false
+    seen.add(u.url)
+    return true
+  })
+
+  try {
+    await db
+      .update(competitors)
+      .set({ name, updatedAt: new Date() })
+      .where(eq(competitors.id, competitorId))
+
+    // Reconcile-by-id: never delete-and-reinsert. snapshots FK-cascades from
+    // sources, so recreating a source row would silently wipe Phase 2+
+    // history for an unchanged URL. Every statement below is scoped by BOTH
+    // the source id AND competitorId so a forged source id belonging to a
+    // different competitor can never be touched (T-01-08).
+    const existingSources = await db
+      .select({ id: sources.id })
+      .from(sources)
+      .where(eq(sources.competitorId, competitorId))
+    const existingIds = new Set(existingSources.map((s) => s.id))
+
+    const payloadIds = new Set<number>()
+    for (const row of dedupedUrls) {
+      if (row.id != null && existingIds.has(row.id)) {
+        payloadIds.add(row.id)
+        await db
+          .update(sources)
+          .set({ url: row.url, kind: row.kind })
+          .where(and(eq(sources.id, row.id), eq(sources.competitorId, competitorId)))
+      } else {
+        await db.insert(sources).values({
+          competitorId,
+          url: row.url,
+          kind: row.kind,
+        })
+      }
+    }
+
+    const idsToDelete = [...existingIds].filter((id) => !payloadIds.has(id))
+    if (idsToDelete.length > 0) {
+      await db
+        .delete(sources)
+        .where(
+          and(inArray(sources.id, idsToDelete), eq(sources.competitorId, competitorId)),
+        )
+    }
+  } catch {
+    return {
+      success: false,
+      formError: "Couldn't save competitor. Check your connection and try again.",
+    }
+  }
+
+  revalidatePath('/competitors')
+  return { success: true }
+}
+
+export async function deleteCompetitor(formData: FormData): Promise<void> {
+  const parsed = z.coerce.number().int().positive().safeParse(formData.get('id'))
+  if (!parsed.success) return
+
+  // sources cascade-delete via the schema's onDelete: 'cascade' FK — no
+  // explicit sources delete statement needed (and none is written here).
+  await db.delete(competitors).where(eq(competitors.id, parsed.data))
+  revalidatePath('/competitors')
 }
